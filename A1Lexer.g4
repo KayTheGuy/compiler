@@ -19,6 +19,9 @@ fragment ALPHA
 fragment HEX_LETTERS 
 	:  [a-fA-F]
 	;
+fragment HEX_SIGN 
+	: '0x' 
+	;
 
 // Whitespace
 // ==============================================================
@@ -69,9 +72,6 @@ TRUE
 	;
 FALSE 
 	: 'false' 
-	;
-HEX_SIGN 
-	: '0x' 
 	;
 
 // Assignments
