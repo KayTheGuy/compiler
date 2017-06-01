@@ -1,0 +1,12 @@
+class Program{
+int a,b;
+boolean s_a, myBool
+boolean s_b = true;
+void call ( )
+{
+	b = 0;
+	a = a / b;
+	a = a + 1;
+}
+
+}

@@ -8,7 +8,7 @@ lexer grammar A1Lexer;
 // fragments
 // ==============================================================
 fragment DELIM 
-	: ' ' | '\t' | '\n'
+	: ' ' | '\t' | '\n' | '\r' 
 	;
 fragment DIGIT 
 	: [0-9] 
