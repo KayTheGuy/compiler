@@ -1,12 +1,13 @@
 class Program{
-int a,b;
-boolean s_a, myBool
-boolean s_b = true;
+
+int b[8], b1, b2[0x4a];
+boolean s_a, myBool;
+int d = 'c';
 void call ( )
 {
-	b = 0;
+	b_location = 0;
 	a = a / b;
-	a = a + 1;
+	a_array_location[7] += 1;
+	b_array_location[1+9] += 1;
 }
-
 }

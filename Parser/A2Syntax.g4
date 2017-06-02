@@ -131,12 +131,27 @@ field_decl returns [int id]
 
 	PrintEdge($f.id, PrintNode($Ident.text));
 }
+| f=field_decl ',' Ident '[' num ']'
+{
+	$id = $f.id;
+
+	PrintEdge($f.id, PrintNode($Ident.text));
+	PrintEdge($f.id, PrintNode($num.text));
+}
 | Type Ident
 {
 	$id = PrintNode("Field_decl");
 
 	PrintEdge($id, PrintNode($Type.text));
 	PrintEdge($id, PrintNode($Ident.text));
+}
+| Type Ident '[' num ']'
+{
+	$id = PrintNode("Field_decl");
+
+	PrintEdge($id, PrintNode($Type.text));
+	PrintEdge($id, PrintNode($Ident.text));
+	PrintEdge($id, PrintNode($num.text));
 }
 ;
 
@@ -154,15 +169,12 @@ inited_field_decl returns [int id]
 method_decls returns [MySet s]
 : m=method_decls method_decl
 {
-	
 	$s = $m.s;
 	$s.ExtendArray($method_decl.id);
 }
 |
 {
 	$s = new MySet();
-	
-	
 }
 ;
 
@@ -185,7 +197,6 @@ method_decl returns [int id]
 	PrintEdge($id, PrintNode($Ident.text));
 	PrintEdge($id, $params.id);
 	PrintEdge($id, $block.id);
-	
 }
 ;
 
@@ -196,7 +207,6 @@ params returns [int id]
 	
 	PrintEdge($id, PrintNode($Type.text));
 	PrintEdge($id, PrintNode($Ident.text));
-
 	PrintEdges($id, $nextParams.s);
 }
 |
@@ -323,6 +333,12 @@ location returns [int id]
 {
 	$id = PrintNode("Loc");
 	PrintEdge($id, PrintNode($Ident.text));
+}
+| Ident '[' expr ']'
+{
+	$id = PrintNode("Array_loc");
+	PrintEdge($id, PrintNode($Ident.text));
+	PrintEdge($id, $expr.id);
 }
 ;
 
