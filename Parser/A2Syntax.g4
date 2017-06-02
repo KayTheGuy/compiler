@@ -124,6 +124,7 @@ field_decls returns [MySet s]
 }
 ;
 
+// <field_decl> -> <type> (<id> | <id> [ <int_literal> ] ) ( , <id> | <id>[ <int_literal> ] )* ;
 field_decl returns [int id]
 : f=field_decl ',' Ident
 {
@@ -306,9 +307,10 @@ statement returns [int id]
 	$id = $block.id;
 };
 
-//<expr> -> <expr> <bin_op> <expr>
-//<expr> -> <location>
-//<expr> -> <literal>
+// <expr> -> <expr> <bin_op> <expr>
+// <expr> -> <location>
+// <expr> -> <literal>
+// <expr> -> - <expr>
 expr returns [int id]
 : literal
 {
@@ -326,6 +328,16 @@ expr returns [int id]
 {
 	$id = PrintNode("Loc_expr");
 	PrintEdge($id, $location.id);
+}
+| '-' e=expr
+{
+	$id = PrintNode("Neg_expr");
+	PrintEdge($id, $e.id);
+}
+| '!' e=expr 
+{
+	$id = PrintNode("Not_expr");
+	PrintEdge($id, $e.id);
 };
 
 location returns [int id]

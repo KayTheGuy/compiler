@@ -8,6 +8,7 @@ void call ( )
 	b_location = 0;
 	a = a / b;
 	a_array_location[7] += 1;
-	b_array_location[1+9] += 1;
+	b_array_location[-a] += 1;
+	b_array_location[!100] += 1;
 }
 }
