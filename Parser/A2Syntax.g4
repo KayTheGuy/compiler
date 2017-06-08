@@ -293,9 +293,37 @@ statements returns [int id]
 }
 ;
 
+// <statement> -> if ( <expr> ) <block> ( else <block> )?
+// <statement> -> for <id> = <expr> , <expr> <block>
 // <statement> -> <location> <assign_op> <expr> ;
+// <statement> -> <method_call> ;
+// <statement> -> <block>
+// <statement> -> return ( <expr> )? ;
+// <statement> -> break ;
+// <statement> -> continue ;
 statement returns [int id]
-: location eqOp expr ';'
+: If '(' expr ')' b=block 
+{
+	$id = PrintNode("If");
+	PrintEdge($id, $expr.id);
+	PrintEdge($id, $b.id);
+}
+| If '(' expr ')' b1=block Else b2=block
+{
+	$id = PrintNode("If_Else");
+	PrintEdge($id, $expr.id);
+	PrintEdge($id, $b1.id);
+	PrintEdge($id, $b2.id);
+}
+| For Ident '=' e1=expr ',' e2=expr block
+{
+	$id = PrintNode("For");
+	PrintEdge($id, PrintNode($Ident.text));
+	PrintEdge($id, $e1.id);
+	PrintEdge($id, $e2.id);
+	PrintEdge($id, $block.id);
+}
+| location eqOp expr ';'
 {
 	$id = PrintNode("Assign");
 	PrintEdge($id, $location.id);
@@ -305,12 +333,28 @@ statement returns [int id]
 | block
 {
 	$id = $block.id;
-};
+}
+| Ret (expr)? ';'
+{
+	$id = PrintNode("Ret");
+	PrintEdge($id, $expr.id);
+}
+| Brk ';'
+{
+	$id = PrintNode("Break");
+}
+| Cnt ';'
+{
+	$id = PrintNode("Cont");
+}
+;
 
 // <expr> -> <expr> <bin_op> <expr>
 // <expr> -> <location>
 // <expr> -> <literal>
 // <expr> -> - <expr>
+// <expr> -> ( <expr> )
+// <expr> -> <method_call>
 expr returns [int id]
 : literal
 {
@@ -338,8 +382,15 @@ expr returns [int id]
 {
 	$id = PrintNode("Not_expr");
 	PrintEdge($id, $e.id);
-};
+}
+| '(' e=expr ')'
+{
+	$id = $e.id;
+}
+;
 
+// <location> -> <id>
+// <location> -> <id> [ <expr> ]
 location returns [int id]
 :Ident
 {
