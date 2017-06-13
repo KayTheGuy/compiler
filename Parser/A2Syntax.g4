@@ -411,10 +411,17 @@ method_call returns [int id]
 ;
 
 arg_exprs returns [MySet s]
-: a=arg_exprs arg_expr
+: a=arg_exprs nextArg_expr
 {
 	$s = $a.s;
-	$s.ExtendArray($arg_expr.id);
+	$s.ExtendArray($nextArg_expr.id);
+}
+| expr
+{
+	$s = new MySet();
+	int id = PrintNode("Expr_arg");
+	PrintEdge(id, $expr.id);
+	$s.ExtendArray(id);
 }
 | 
 {
@@ -422,13 +429,8 @@ arg_exprs returns [MySet s]
 }
 ;
 
-arg_expr returns [int id]
-: expr
-{
-	$id = PrintNode("Expr_arg");
-	PrintEdge($id, $expr.id);
-}
-| ',' expr
+nextArg_expr returns [int id]
+: ',' expr
 {
 	$id = PrintNode("Expr_arg");
 	PrintEdge($id, $expr.id);
