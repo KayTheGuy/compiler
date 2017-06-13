@@ -334,10 +334,14 @@ statement returns [int id]
 {
 	$id = $block.id;
 }
-| Ret (expr)? ';'
+| Ret expr ';'
 {
 	$id = PrintNode("Ret");
 	PrintEdge($id, $expr.id);
+}
+| Ret ';'
+{
+	$id = PrintNode("Ret");
 }
 | Brk ';'
 {
@@ -386,6 +390,48 @@ expr returns [int id]
 | '(' e=expr ')'
 {
 	$id = $e.id;
+}
+| m=method_call
+{
+	$id = $m.id;
+}
+;
+
+// <method_call> -> <method_name> ( (<expr> ( , <expr> )*)? )
+// <method_call> -> callout ( <string_literal> ( , <callout_arg> )* )
+method_call returns [int id]
+:  Ident '(' arg_exprs ')'
+{
+	$id = PrintNode("Call_expr");
+	PrintEdge($id, PrintNode($Ident.text));
+	if ($arg_exprs.s.size > 0) {
+		PrintEdges($id, $arg_exprs.s);
+	}
+}
+;
+
+arg_exprs returns [MySet s]
+: a=arg_exprs arg_expr
+{
+	$s = $a.s;
+	$s.ExtendArray($arg_expr.id);
+}
+| 
+{
+	$s = new MySet();
+}
+;
+
+arg_expr returns [int id]
+: expr
+{
+	$id = PrintNode("Expr_arg");
+	PrintEdge($id, $expr.id);
+}
+| ',' expr
+{
+	$id = PrintNode("Expr_arg");
+	PrintEdge($id, $expr.id);
 }
 ;
 
