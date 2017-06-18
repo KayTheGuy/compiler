@@ -334,6 +334,11 @@ statement returns [int id]
 {
 	$id = $block.id;
 }
+| method_call ';'
+{
+	$id = PrintNode("Call");
+	PrintEdge($id, $method_call.id);
+}
 | Ret expr ';'
 {
 	$id = PrintNode("Ret");
@@ -391,9 +396,9 @@ expr returns [int id]
 {
 	$id = $e.id;
 }
-| m=method_call
+| method_call
 {
-	$id = $m.id;
+	$id = $method_call.id;
 }
 ;
 
@@ -406,6 +411,15 @@ method_call returns [int id]
 	PrintEdge($id, PrintNode($Ident.text));
 	if ($arg_exprs.s.size > 0) {
 		PrintEdges($id, $arg_exprs.s);
+	}
+} 
+| Callout '(' Str callout_args ')'
+{
+	$id = PrintNode("Ext_meth");
+	PrintEdge($id, PrintNode($Callout.text));
+	PrintEdge($id, PrintNode(ProcessString($Str.text)));
+	if ($callout_args.s.size > 0) {
+		PrintEdges($id, $callout_args.s);
 	}
 }
 ;
@@ -434,6 +448,32 @@ nextArg_expr returns [int id]
 {
 	$id = PrintNode("Expr_arg");
 	PrintEdge($id, $expr.id);
+}
+;
+
+callout_args returns [MySet s]
+: c=callout_args callout_arg
+{
+	$s = $c.s;
+	$s.ExtendArray($callout_arg.id);
+}
+|
+{
+	$s = new MySet();
+}
+;
+
+// <callout_arg> -> <expr> | <string_literal> 
+callout_arg returns [int id]
+: ',' expr
+{
+	$id = PrintNode("Expr_arg");
+	PrintEdge($id, $expr.id);
+}
+| ',' Str
+{
+	$id = PrintNode("String_arg");
+	PrintEdge($id, PrintNode(ProcessString($Str.text)));
 }
 ;
 
