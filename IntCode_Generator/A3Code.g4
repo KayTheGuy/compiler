@@ -73,7 +73,7 @@ public class SymTab {
 	}
 
 	int Add (DataType d) {
-		st [size] = new Symbol (temps, d);
+		st[size] = new Symbol (temps, d);
 		temps ++;
 		return (size ++);
 	}
@@ -169,6 +169,7 @@ field_decl returns [DataType t]
 }
 | f=field_decl ',' Ident '[' num ']'
 {
+	// TODO: add action
 }
 | Type Ident
 {
@@ -177,12 +178,14 @@ field_decl returns [DataType t]
 }
 | Type Ident '[' num ']'
 {
+	// TODO: add action
 }
 ;
 
 inited_field_decl returns [int id]
 : Type Ident '=' literal 
 {
+	// TODO: add action
 }
 ;
 
@@ -198,25 +201,24 @@ method_decl
 }
 | Void Ident '(' params ')' block
 {
+	// TODO: add action
 }
 ;
 
 params returns [int id]
 : Type Ident nextParams
 {
+	s.insert($Ident.text, DataType.valueOf($Type.text.toUpperCase()));
 }
 |
-{
-}
 ;
 
 nextParams
 : n=nextParams ',' Type Ident
 {
+	s.insert($Ident.text, DataType.valueOf($Type.text.toUpperCase()));
 }
 |
-{
-}
 ;
 
 block
@@ -247,75 +249,93 @@ statements
 ;
 
 statement
-: location eqOp expr ';'          // TODO: add rules for other assignments
+: location eqOp expr ';'          
 {
 	q.Add($location.id, $expr.id, -1, "=");
 }
 | If '(' expr ')' block
 {
+	// TODO: action
 }
 | If '(' expr ')' b1=block Else b2=block
 {
+	// TODO: action
 }
 | For Ident '=' e1=expr ',' e2=expr block
 {
+	// TODO: action
 }
 | Ret ';'
 {
+	// TODO: action
 }
 | Ret '(' expr ')' ';'
 {
+	// TODO: action
 }
 | Brk ';'
 {
+	// TODO: action
 }
 | Cnt ';'
 {
+	// TODO: action
 }
 | block
 {
+	// TODO: action
 }
 | methodCall ';'
 {
+	// TODO: action
 }
 ;
 
 methodCall returns [int id]
 : Ident '(' args ')'
 {
+	// TODO: action
 }
 | Callout '(' Str calloutArgs ')'
 {
+	// TODO: action
 }
 ;
 
 args 
 : someArgs
 {
+	// TODO: action
 }
 |
 {
+	// TODO: action
 }
 ;
 
 someArgs
 : t=someArgs ',' expr
 {
+	// TODO: action
 }
 | expr
 {
+	// TODO: action
 }
 ;
 
 calloutArgs 
 : c=calloutArgs ',' expr
 {
+	// TODO: action
 }
 | c=calloutArgs ',' Str
 {
+	// TODO: action
 }
 |
 {
+	// TODO: action
 }
 ;
 
@@ -330,35 +350,49 @@ expr returns [int id]
 }
 | '(' e=expr ')'
 {
+	$id = $e.id;
 }
 | SubOp e=expr
 {
+	// TODO: raise error if type boolean
 }
 | '!' e=expr
 {
+	// TODO: raise error if type not boolean
 }
 | e1=expr MulDiv e2=expr
 {
+	$id = s.Add(s.GetType($e1.id));
+	q.Add($id, $e1.id, $e2.id, $MulDiv.text);
 }
 | e1=expr AddOp e2=expr
 {
 	$id = s.Add(s.GetType($e1.id));
-	q.Add($id, $e1.id, $e2.id, "+");
+	q.Add($id, $e1.id, $e2.id, $AddOp.text);
 }
 | e1=expr SubOp e2=expr
 {
+	$id = s.Add(s.GetType($e1.id));
+	q.Add($id, $e1.id, $e2.id, $SubOp.text);
 }
 | e1=expr RelOp e2=expr
 {
+	$id = s.Add(s.GetType($e1.id));
+	q.Add($id, $e1.id, $e2.id, $RelOp.text);
 }
 | e1=expr AndOp e2=expr
 {
+	$id = s.Add(s.GetType($e1.id));
+	q.Add($id, $e1.id, $e2.id, $AndOp.text);
 }
 | e1=expr OrOp e2=expr
 {
+	$id = s.Add(s.GetType($e1.id));
+	q.Add($id, $e1.id, $e2.id, $OrOp.text);
 }
 | methodCall
 {
+	// TODO: add action
 }
 ;
 
@@ -383,7 +417,13 @@ literal returns [int id]
 	$id = s.insert($num.text, DataType.INT);
 }
 | Char
+{
+	// TODO: ask prof what type should it be?
+}
 | BoolLit
+{
+	$id = s.insert($BoolLit.text, DataType.BOOLEAN);
+}
 ;
 
 eqOp
