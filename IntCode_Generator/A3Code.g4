@@ -11,7 +11,7 @@ import java.io.*;
 @parser::members {
 
 public enum DataType {
-	INT, BOOLEAN, VOID, CHAR, INVALID, ARRAY
+	INT, BOOLEAN, VOID, CHAR, INVALID
 }
 
 public class Symbol {
@@ -181,7 +181,7 @@ field_decl returns [DataType t]
 | f=field_decl ',' Ident '[' num ']'
 {
 	$t = $f.t;
-	// TODO: add action
+	s.insert($Ident.text, $t, Integer.parseInt($num.text));
 }
 | Type Ident
 {
@@ -190,7 +190,8 @@ field_decl returns [DataType t]
 }
 | Type Ident '[' num ']'
 {
-	// TODO: add action
+	$t = DataType.valueOf($Type.text.toUpperCase());
+	s.insert($Ident.text, $t, Integer.parseInt($num.text));
 }
 ;
 
@@ -414,7 +415,13 @@ location returns [int id]
 	$id = s.Find($Ident.text);
 }
 | Ident '[' expr ']'
-{
+{	
+	int ident_id = s.Find($Ident.text);
+	int temp_id = s.Add(s.GetType(ident_id));
+	int size_id = s.insert("4", DataType.INT, -1);
+	q.Add(temp_id, size_id, $expr.id, "*");
+	$id = s.insert($Ident.text + "[ " + s.GetName(temp_id) +" ]", 
+					s.GetType(temp_id), s.GetLength(temp_id));
 }
 ;
 
