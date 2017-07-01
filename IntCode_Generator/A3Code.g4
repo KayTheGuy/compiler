@@ -264,7 +264,7 @@ statements
 statement
 : location eqOp expr ';'          
 {
-	q.Add($location.id, $expr.id, -1, "=");
+	q.Add($location.id, $expr.id, -1, "");
 }
 | If '(' expr ')' block
 {
