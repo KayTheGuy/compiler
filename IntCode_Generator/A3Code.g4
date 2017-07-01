@@ -1,7 +1,7 @@
 grammar A3Code;
 
 //---------------------------------------------------------------------------------------------------
-// Session 1: ANTLR API, You SHOULD NOT make any modification to this session
+// ANTLR API:
 //---------------------------------------------------------------------------------------------------
 @header {
 
@@ -11,21 +11,24 @@ import java.io.*;
 @parser::members {
 
 public enum DataType {
-	INT, BOOLEAN, INVALID
+	INT, BOOLEAN, VOID, CHAR, INVALID, ARRAY
 }
 
 public class Symbol {
 	String name;
 	DataType dt;
+	int length; 
 
-	Symbol (String n, DataType d) {
+	Symbol (String n, DataType d, int l) {
 		name = n;
 		dt = d;
+		length = l;
 	}
 
-	Symbol (int id, DataType d) {
+	Symbol (int id, DataType d, int l) {
 		name = "t_" + id;
 		dt = d;
+		length = l;
 	}
 
 	boolean Equal (String n) {
@@ -40,13 +43,16 @@ public class Symbol {
 		return name;
 	}
 
+	int GetLength () {
+		return length;
+	}
+
 	void Print() {
-		System.out.println(name + "\t" + dt);
+		System.out.println(name + "\t" + dt + "\t" + length);
 	}
 }
 
 public class SymTab {
-	
 	Symbol st[];
 	int size;
 	int temps;
@@ -64,16 +70,16 @@ public class SymTab {
 		return -1;
 	}
 
-	int insert(String n, DataType d) {
+	int insert(String n, DataType d, int l) {
 		int id = Find(n);
 		if (id != -1) return id;
 	
-		st[size] = new Symbol(n, d);
+		st[size] = new Symbol(n, d, l);
 		return (size ++);
 	}
 
 	int Add (DataType d) {
-		st[size] = new Symbol (temps, d);
+		st[size] = new Symbol (temps, d, -1);
 		temps ++;
 		return (size ++);
 	}
@@ -86,6 +92,11 @@ public class SymTab {
 	String GetName (int id) {
 		if (id == -1) return ("");
 		return (st[id].GetName()); 
+	}
+
+	int GetLength (int id) {
+		if (id == -1) return 0;
+		return (st[id].GetLength()); 
 	}
 
 	void Print() {
@@ -144,7 +155,7 @@ QuadTab q = new QuadTab();
 }
 
 //---------------------------------------------------------------------------------------------------
-// Session 2: Fill your code here
+// Grammar Rules 
 //---------------------------------------------------------------------------------------------------
 prog
 : Class Program '{' field_decls method_decls '}'
@@ -165,16 +176,17 @@ field_decl returns [DataType t]
 : f=field_decl ',' Ident
 {
 	$t = $f.t;
-	s.insert($Ident.text, $t);
+	s.insert($Ident.text, $t, -1);
 }
 | f=field_decl ',' Ident '[' num ']'
 {
+	$t = $f.t;
 	// TODO: add action
 }
 | Type Ident
 {
 	$t = DataType.valueOf($Type.text.toUpperCase());
-	s.insert($Ident.text, $t);
+	s.insert($Ident.text, $t, -1);
 }
 | Type Ident '[' num ']'
 {
@@ -197,7 +209,7 @@ method_decls
 method_decl
 : Type Ident '(' params ')' block
 {
-	s.insert($Ident.text, DataType.valueOf($Type.text.toUpperCase()));
+	s.insert($Ident.text, DataType.valueOf($Type.text.toUpperCase()), -1);
 }
 | Void Ident '(' params ')' block
 {
@@ -208,7 +220,7 @@ method_decl
 params returns [int id]
 : Type Ident nextParams
 {
-	s.insert($Ident.text, DataType.valueOf($Type.text.toUpperCase()));
+	s.insert($Ident.text, DataType.valueOf($Type.text.toUpperCase()), -1);
 }
 |
 ;
@@ -216,7 +228,7 @@ params returns [int id]
 nextParams
 : n=nextParams ',' Type Ident
 {
-	s.insert($Ident.text, DataType.valueOf($Type.text.toUpperCase()));
+	s.insert($Ident.text, DataType.valueOf($Type.text.toUpperCase()), -1);
 }
 |
 ;
@@ -234,12 +246,12 @@ var_decl returns [DataType t]
 : v=var_decl ',' Ident
 {
 	$t = $v.t;
-	s.insert($Ident.text, $t);
+	s.insert($Ident.text, $t, -1);
 }
 | Type Ident
 {
 	$t = DataType.valueOf($Type.text.toUpperCase());
-	s.insert($Ident.text, $t);
+	s.insert($Ident.text, $t, -1);
 }
 ;
 
@@ -414,15 +426,15 @@ num
 literal returns [int id]
 : num
 {
-	$id = s.insert($num.text, DataType.INT);
+	$id = s.insert($num.text, DataType.INT, -1);
 }
 | Char
 {
-	// TODO: ask prof what type should it be?
+	$id = s.insert($Char.text, DataType.CHAR, -1);
 }
 | BoolLit
 {
-	$id = s.insert($BoolLit.text, DataType.BOOLEAN);
+	$id = s.insert($BoolLit.text, DataType.BOOLEAN, -1);
 }
 ;
 
@@ -430,10 +442,9 @@ eqOp
 : '='
 | AssignOp
 ;
-//--------------------------------------------- END OF SESSION 2 -----------------------------------
 
 //---------------------------------------------------------------------------------------------------
-// Session 3: Lexical definition, You SHOULD NOT make any modification to this session
+// Lexical Rules
 //---------------------------------------------------------------------------------------------------
 fragment Delim
 : ' '
