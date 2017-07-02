@@ -198,7 +198,9 @@ field_decl returns [DataType t]
 inited_field_decl returns [int id]
 : Type Ident '=' literal 
 {
-	// TODO: add action
+	DataType type = DataType.valueOf($Type.text.toUpperCase());
+	int ident_id = s.insert($Ident.text, type, -1);
+	q.Add(ident_id, $literal.id, -1, "");
 }
 ;
 
