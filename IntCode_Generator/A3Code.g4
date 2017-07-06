@@ -114,6 +114,7 @@ public class Quad {
 	int src1;
 	int src2;
 	int dst;
+	String instr;
 
 	Quad (int l, int d, int s1, int s2, String o) {
 		label = l;
@@ -121,11 +122,27 @@ public class Quad {
 		src1 = s1;
 		src2 = s2;
 		op = o;
+		instr = null;
+	}
+
+	Quad (int label, String instr) {
+		this.label = label;
+		this.instr = instr;
+	}
+
+	int UpdateInstruction(String instr) {
+		this.instr = instr;
+		return label;
 	}
 
 	void Print () {
-		System.out.println("L_" + label + ": " + s.GetName(dst) + " = " 
-				+ s.GetName(src1) + " " + op + " " + s.GetName(src2));
+		if (instr == null) {
+			System.out.println("L_" + label + ": " + s.GetName(dst) + " = " 
+					+ s.GetName(src1) + " " + op + " " + s.GetName(src2));
+		}
+		else{
+			System.out.println("L_" + label + ": " + instr);
+		}
 	}
 }
 
@@ -141,6 +158,19 @@ public class QuadTab {
 	int Add(int dst, int src1, int src2, String op) {
 		qt[size] = new Quad(size, dst, src1, src2, op);
 		return (size ++);
+	}
+
+	int AddInstr(String instr) {
+		qt[size] = new Quad(size, instr);
+		return (size ++);
+	}
+
+	Quad getQuad(int id) {
+		return qt[id];
+	}
+
+	int getSize() {
+		return size;
 	}
 
 	void Print() {
@@ -236,8 +266,12 @@ nextParams
 |
 ;
 
-block
+block returns [int start_id, int end_id]
 : '{' var_decls statements '}'
+{
+	$start_id = $statements.start_id;
+	$end_id = $statements.end_id;
+}
 ;
 
 var_decls
@@ -258,23 +292,39 @@ var_decl returns [DataType t]
 }
 ;
 
-statements
-: statement t=statements
+statements returns [int start_id, int end_id]
+: m1=stmtMemory statement t=statements m2=stmtMemory
+{	
+	$start_id = $m1.id;
+	$end_id = $m2.id;
+}
 |
 ;
 
-statement
-: location eqOp expr ';'          
+stmtMemory returns [int id]
+:
 {
+	$id = q.getSize();
+}
+;
+
+statement 
+: location eqOp expr ';'          
+{	
 	q.Add($location.id, $expr.id, -1, "");
 }
-| If '(' expr ')' block
+| If '(' expr ')' ifMemory block
 {
-	// TODO: action
+	String expr_name = s.GetName($expr.id);
+	q.getQuad($ifMemory.id1).UpdateInstruction("if " + expr_name + " goto L_" + ($block.start_id ));
+	q.getQuad($ifMemory.id2).UpdateInstruction("ifFalse " + expr_name + " goto L_" + ($block.end_id ));
 }
-| If '(' expr ')' b1=block Else b2=block
+| If '(' expr ')' ifMemory b1=block Else elseMemory b2=block
 {
-	// TODO: action
+	String expr_name = s.GetName($expr.id);
+	q.getQuad($ifMemory.id1).UpdateInstruction("if " + expr_name + " goto L_" + ($b1.start_id ));
+	q.getQuad($ifMemory.id2).UpdateInstruction("ifFalse " + expr_name + " goto L_" + ($b2.start_id ));
+	q.getQuad($elseMemory.id).UpdateInstruction("goto L_" + ($b2.end_id ));
 }
 | For Ident '=' e1=expr ',' e2=expr block
 {
@@ -303,6 +353,21 @@ statement
 | methodCall ';'
 {
 	// TODO: action
+}
+;
+
+ifMemory returns [int id1, int id2]
+:
+{
+	$id1 = q.AddInstr("ifMemory");
+	$id2 = q.AddInstr("ifMemory");
+}
+;
+
+elseMemory returns [int id]
+:
+{
+	$id = q.AddInstr("elseMemory");
 }
 ;
 
