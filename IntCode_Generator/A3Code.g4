@@ -316,19 +316,29 @@ statement
 | If '(' expr ')' ifMemory block
 {
 	String expr_name = s.GetName($expr.id);
-	q.getQuad($ifMemory.id1).UpdateInstruction("if " + expr_name + " goto L_" + ($block.start_id ));
-	q.getQuad($ifMemory.id2).UpdateInstruction("ifFalse " + expr_name + " goto L_" + ($block.end_id ));
+	q.getQuad($ifMemory.id1).UpdateInstruction("if " + expr_name + " goto L_" + $block.start_id);
+	q.getQuad($ifMemory.id2).UpdateInstruction("ifFalse " + expr_name + " goto L_" + $block.end_id);
 }
 | If '(' expr ')' ifMemory b1=block Else elseMemory b2=block
 {
 	String expr_name = s.GetName($expr.id);
-	q.getQuad($ifMemory.id1).UpdateInstruction("if " + expr_name + " goto L_" + ($b1.start_id ));
-	q.getQuad($ifMemory.id2).UpdateInstruction("ifFalse " + expr_name + " goto L_" + ($b2.start_id ));
-	q.getQuad($elseMemory.id).UpdateInstruction("goto L_" + ($b2.end_id ));
+	q.getQuad($ifMemory.id1).UpdateInstruction("if " + expr_name + " goto L_" + $b1.start_id);
+	q.getQuad($ifMemory.id2).UpdateInstruction("ifFalse " + expr_name + " goto L_" + $b2.start_id);
+	q.getQuad($elseMemory.id).UpdateInstruction("goto L_" + $b2.end_id);
 }
-| For Ident '=' e1=expr ',' e2=expr block
-{
-	// TODO: action
+| For Ident '=' e1=expr ',' e2=expr forMemory block 
+{	
+	int ident_id = s.Find($Ident.text);
+	if (ident_id != -1) {
+		String e2_tmp = s.GetName($forMemory.e2_tmp_id);
+		q.getQuad($forMemory.id1).UpdateInstruction($Ident.text + " = " + s.GetName($e1.id));
+		q.getQuad($forMemory.id2).UpdateInstruction(e2_tmp + " = " + $Ident.text + " < " + s.GetName($e2.id));
+		q.getQuad($forMemory.id3).UpdateInstruction("if " + e2_tmp + " goto L_" + $block.start_id);
+		int size_id = s.insert("1", DataType.INT, -1);
+		q.Add(ident_id, ident_id, size_id, "+");
+		int end_of_for_id = q.AddInstr("goto L_" + $forMemory.id2);
+		q.getQuad($forMemory.id4).UpdateInstruction("ifFalse " + e2_tmp + " goto L_" + (end_of_for_id + 1));
+	}
 }
 | Ret ';'
 {
@@ -368,6 +378,17 @@ elseMemory returns [int id]
 :
 {
 	$id = q.AddInstr("elseMemory");
+}
+;
+
+forMemory returns [int id1, int id2, int id3, int id4, int e2_tmp_id]
+:
+{
+	$id1 = q.AddInstr("forMemory");
+	$id2 = q.AddInstr("forMemory");
+	$id3 = q.AddInstr("forMemory");
+	$id4 = q.AddInstr("forMemory");
+	$e2_tmp_id = s.Add(DataType.INT);
 }
 ;
 
