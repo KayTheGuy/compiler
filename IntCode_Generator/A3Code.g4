@@ -64,7 +64,7 @@ public class SymTab {
 	}
 
 	int Find (String n) {
-		for (int  i = 0; i < size; i ++) {
+		for (int  i = size - 1; i >= 0; i --) {
 			if (st[i].Equal(n)) return i;
 		}
 		return -1;
@@ -342,11 +342,11 @@ statement
 }
 | Ret ';'
 {
-	// TODO: action
+	q.AddInstr("ret");
 }
 | Ret '(' expr ')' ';'
 {
-	// TODO: action
+	q.AddInstr("ret " + s.GetName($expr.id));
 }
 | Brk ';'
 {
@@ -395,48 +395,51 @@ forMemory returns [int id1, int id2, int id3, int id4, int e2_tmp_id]
 methodCall returns [int id]
 : Ident '(' args ')'
 {
-	// TODO: action
+	$id = s.Add(s.GetType(s.Find($Ident.text)));
+	q.AddInstr(s.GetName($id) + " = "+ $Ident.text + " call " + $args.numberOfArg);
 }
 | Callout '(' Str calloutArgs ')'
 {
-	// TODO: action
+	q.AddInstr($Str.text + " call " + $calloutArgs.numberOfArg);
 }
 ;
 
-args 
+args returns [int numberOfArg]
 : someArgs
 {
-	// TODO: action
+	$numberOfArg = $someArgs.numberOfArg;
 }
 |
 {
-	// TODO: action
+	$numberOfArg = 0;
 }
 ;
 
-someArgs
+someArgs returns [int numberOfArg]
 : t=someArgs ',' expr
 {
-	// TODO: action
+	$numberOfArg = $t.numberOfArg + 1;
 }
 | expr
 {
-	// TODO: action
+	$numberOfArg = 1;
 }
 ;
 
-calloutArgs 
+calloutArgs returns [int numberOfArg]
 : c=calloutArgs ',' expr
 {
-	// TODO: action
+	q.AddInstr(s.GetName($expr.id) + " param");
+	$numberOfArg = $c.numberOfArg + 1;
 }
 | c=calloutArgs ',' Str
 {
-	// TODO: action
+	q.AddInstr($Str.text + " param");
+	$numberOfArg = $c.numberOfArg + 1;
 }
 |
 {
-	// TODO: action
+	$numberOfArg = 0;
 }
 ;
 
@@ -455,11 +458,13 @@ expr returns [int id]
 }
 | SubOp e=expr
 {
-	// TODO: raise error if type boolean
+	$id = s.Add(s.GetType($expr.id));
+	int size_id = s.insert("0", DataType.INT, -1);
+	q.Add($id , size_id , $e.id, "-");
 }
 | '!' e=expr
 {
-	// TODO: raise error if type not boolean
+	$id = $e.id;
 }
 | e1=expr MulDiv e2=expr
 {
@@ -493,7 +498,7 @@ expr returns [int id]
 }
 | methodCall
 {
-	// TODO: add action
+	$id = $methodCall.id;
 }
 ;
 
