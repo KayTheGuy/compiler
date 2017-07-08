@@ -115,6 +115,7 @@ public class Quad {
 	int src2;
 	int dst;
 	String instr;
+	boolean isMethod;
 
 	Quad (int l, int d, int s1, int s2, String o) {
 		label = l;
@@ -123,11 +124,13 @@ public class Quad {
 		src2 = s2;
 		op = o;
 		instr = null;
+		isMethod = false;
 	}
 
-	Quad (int label, String instr) {
+	Quad (int label, String instr, boolean isMethod) {
 		this.label = label;
 		this.instr = instr;
+		this.isMethod = isMethod;
 	}
 
 	int UpdateInstruction(String instr) {
@@ -140,7 +143,10 @@ public class Quad {
 			System.out.println("L_" + label + ": " + s.GetName(dst) + " = " 
 					+ s.GetName(src1) + " " + op + " " + s.GetName(src2));
 		}
-		else{
+		else if (isMethod){
+			System.out.println(instr);
+		}
+		else {
 			System.out.println("L_" + label + ": " + instr);
 		}
 	}
@@ -160,8 +166,8 @@ public class QuadTab {
 		return (size ++);
 	}
 
-	int AddInstr(String instr) {
-		qt[size] = new Quad(size, instr);
+	int AddInstr(String instr, boolean isMethod) {
+		qt[size] = new Quad(size, instr, isMethod);
 		return (size ++);
 	}
 
@@ -240,13 +246,21 @@ method_decls
 ;
 
 method_decl
-: Type Ident '(' params ')' block
+: methodMemory Type Ident '(' params ')' block
 {
 	s.insert($Ident.text, DataType.valueOf($Type.text.toUpperCase()), -1);
+	q.getQuad($methodMemory.id).UpdateInstruction($Ident.text + ":");
 }
-| Void Ident '(' params ')' block
+| methodMemory Void Ident '(' params ')' block
 {
-	// TODO: add action
+	q.getQuad($methodMemory.id).UpdateInstruction($Ident.text + ":");
+}
+;
+
+methodMemory returns [int id]
+:
+{
+	$id = q.AddInstr("methodMemory", true);
 }
 ;
 
@@ -336,17 +350,17 @@ statement
 		q.getQuad($forMemory.id3).UpdateInstruction("if " + e2_tmp + " goto L_" + $block.start_id);
 		int size_id = s.insert("1", DataType.INT, -1);
 		q.Add(ident_id, ident_id, size_id, "+");
-		int end_of_for_id = q.AddInstr("goto L_" + $forMemory.id2);
+		int end_of_for_id = q.AddInstr("goto L_" + $forMemory.id2, false);
 		q.getQuad($forMemory.id4).UpdateInstruction("ifFalse " + e2_tmp + " goto L_" + (end_of_for_id + 1));
 	}
 }
 | Ret ';'
 {
-	q.AddInstr("ret");
+	q.AddInstr("ret", false);
 }
 | Ret '(' expr ')' ';'
 {
-	q.AddInstr("ret " + s.GetName($expr.id));
+	q.AddInstr("ret " + s.GetName($expr.id), false);
 }
 | Brk ';'
 {
@@ -369,25 +383,25 @@ statement
 ifMemory returns [int id1, int id2]
 :
 {
-	$id1 = q.AddInstr("ifMemory");
-	$id2 = q.AddInstr("ifMemory");
+	$id1 = q.AddInstr("ifMemory", false);
+	$id2 = q.AddInstr("ifMemory", false);
 }
 ;
 
 elseMemory returns [int id]
 :
 {
-	$id = q.AddInstr("elseMemory");
+	$id = q.AddInstr("elseMemory", false);
 }
 ;
 
 forMemory returns [int id1, int id2, int id3, int id4, int e2_tmp_id]
 :
 {
-	$id1 = q.AddInstr("forMemory");
-	$id2 = q.AddInstr("forMemory");
-	$id3 = q.AddInstr("forMemory");
-	$id4 = q.AddInstr("forMemory");
+	$id1 = q.AddInstr("forMemory", false);
+	$id2 = q.AddInstr("forMemory", false);
+	$id3 = q.AddInstr("forMemory", false);
+	$id4 = q.AddInstr("forMemory", false);
 	$e2_tmp_id = s.Add(DataType.INT);
 }
 ;
@@ -396,11 +410,11 @@ methodCall returns [int id]
 : Ident '(' args ')'
 {
 	$id = s.Add(s.GetType(s.Find($Ident.text)));
-	q.AddInstr(s.GetName($id) + " = "+ $Ident.text + " call " + $args.numberOfArg);
+	q.AddInstr(s.GetName($id) + " = "+ $Ident.text + " call " + $args.numberOfArg, false);
 }
 | Callout '(' Str calloutArgs ')'
 {
-	q.AddInstr($Str.text + " call " + $calloutArgs.numberOfArg);
+	q.AddInstr($Str.text + " call " + $calloutArgs.numberOfArg, false);
 }
 ;
 
@@ -429,12 +443,12 @@ someArgs returns [int numberOfArg]
 calloutArgs returns [int numberOfArg]
 : c=calloutArgs ',' expr
 {
-	q.AddInstr(s.GetName($expr.id) + " param");
+	q.AddInstr(s.GetName($expr.id) + " param", false);
 	$numberOfArg = $c.numberOfArg + 1;
 }
 | c=calloutArgs ',' Str
 {
-	q.AddInstr($Str.text + " param");
+	q.AddInstr($Str.text + " param", false);
 	$numberOfArg = $c.numberOfArg + 1;
 }
 |
