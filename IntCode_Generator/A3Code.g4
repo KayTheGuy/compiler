@@ -6,6 +6,7 @@ grammar A3Code;
 @header {
 
 import java.io.*;
+import java.util.Stack;
 }
 
 @parser::members {
@@ -188,6 +189,10 @@ public class QuadTab {
 
 QuadTab q = new QuadTab();
 
+Stack forLoopsStack = new Stack();
+ArrayList<Integer> brkIDs = new ArrayList<Integer>(); 
+ArrayList<Integer> cntIDs = new ArrayList<Integer>(); 
+
 }
 
 //---------------------------------------------------------------------------------------------------
@@ -196,8 +201,6 @@ QuadTab q = new QuadTab();
 prog
 : Class Program '{' field_decls method_decls '}'
 {
-	s.Print();
-	System.out.println("------------------------------------");
 	q.Print();
 }
 ;
@@ -349,9 +352,23 @@ statement
 		q.getQuad($forMemory.id2).UpdateInstruction(e2_tmp + " = " + $Ident.text + " < " + s.GetName($e2.id));
 		q.getQuad($forMemory.id3).UpdateInstruction("if " + e2_tmp + " goto L_" + $block.start_id);
 		int size_id = s.insert("1", DataType.INT, -1);
-		q.Add(ident_id, ident_id, size_id, "+");
+		int continue_id = q.Add(ident_id, ident_id, size_id, "+");
 		int end_of_for_id = q.AddInstr("goto L_" + $forMemory.id2, false);
 		q.getQuad($forMemory.id4).UpdateInstruction("ifFalse " + e2_tmp + " goto L_" + (end_of_for_id + 1));
+
+		Iterator<Integer> itr = brkIDs.iterator();
+		while (itr.hasNext()) {
+			Integer brk_id = itr.next(); 
+			q.getQuad(brk_id).UpdateInstruction("goto L_" + (end_of_for_id + 1));
+			itr.remove();
+		}
+
+		itr = cntIDs.iterator();
+		while (itr.hasNext()) {
+			Integer cnt_id = itr.next(); 
+			q.getQuad(cnt_id).UpdateInstruction("goto L_" + continue_id);
+			itr.remove();
+		}
 	}
 }
 | Ret ';'
@@ -364,11 +381,13 @@ statement
 }
 | Brk ';'
 {
-	// TODO: action
+	int break_id = q.AddInstr("break", false);
+	brkIDs.add(break_id);
 }
 | Cnt ';'
 {
-	// TODO: action
+	int continue_id = q.AddInstr("continue", false);
+	cntIDs.add(continue_id);
 }
 | block
 {
