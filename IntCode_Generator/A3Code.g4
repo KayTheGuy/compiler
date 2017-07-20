@@ -390,13 +390,7 @@ statement
 	cntIDs.add(continue_id);
 }
 | block
-{
-	// TODO: action
-}
 | methodCall ';'
-{
-	// TODO: action
-}
 ;
 
 ifMemory returns [int id1, int id2]
@@ -451,10 +445,12 @@ args returns [int numberOfArg]
 someArgs returns [int numberOfArg]
 : t=someArgs ',' expr
 {
+	q.AddInstr(s.GetName($expr.id) + " param", false);
 	$numberOfArg = $t.numberOfArg + 1;
 }
 | expr
 {
+	q.AddInstr(s.GetName($expr.id) + " param", false);
 	$numberOfArg = 1;
 }
 ;
