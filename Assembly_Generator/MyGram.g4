@@ -1,38 +1,16 @@
 grammar MyGram;
 
-
 @header {
-
-import x86.*;
-import java.io.*;
-
+	import x86.*;
+	import java.io.*;
 }
-
-
-
 @parser::members {
 
-
-
-
-
-
-
-	
-
 	SymStack s = new SymStack();
-
 	QuadTab q = new QuadTab(s);
-
-
 }
 
-
-
-
 //---------------------------------------------------------------------------------------------------
-
-
 prog
 : Class Program '{' field_decls
 {
@@ -42,7 +20,6 @@ method_decls '}'
 {
 	s.Print();
 	//print global variables
-	
 
 	System.out.println(".globl main");
 	System.out.println(".data");
@@ -58,7 +35,6 @@ field_decls
 | f=field_decls inited_field_decl ';'
 | 
 ;
-
 
 field_decl returns [DataType t]
 : f=field_decl ',' Ident
@@ -81,7 +57,6 @@ field_decl returns [DataType t]
 	$t = DataType.valueOf($Type.text.toUpperCase());
 	Symbol sym = s.Add($Ident.text, $t, Integer.parseInt($num.text));
 }
-
 ;
 
 inited_field_decl 
@@ -117,7 +92,6 @@ method_decl returns [int stackSize, LocList retList]
 }
  block marker
 {
-	
 	s.PopSymTab(q);
 
 	$retList.Merge($block.retList);
@@ -133,7 +107,6 @@ method_decl returns [int stackSize, LocList retList]
 }
 '(' params ')' 
 {
-
 	$retList = new LocList();
 	$retList.Add(entry);	
 }
@@ -171,7 +144,6 @@ params returns [int count]
 		case 6: q.Add (null, null, null, "push %r9");
 				break;
 	}	
-
 }
 | Type Ident
 {
@@ -186,8 +158,6 @@ params returns [int count]
 	$count = 0;
 }
 ; 
-
-
 
 block returns [LocList nextlist, LocList brklist, LocList cntlist, LocList retList]
 : '{' var_decls statements '}'
@@ -209,7 +179,6 @@ var_decls
 }
 | 
 ;
-
 
 var_decl returns [DataType t]
 : v=var_decl ',' Ident
@@ -236,7 +205,6 @@ statements returns [LocList nextlist, LocList brklist, LocList cntlist, LocList 
 
 	$retList = $t.retList;
 	$retList.Merge($statement.retList);
-
 }
 |
 {
@@ -246,7 +214,6 @@ statements returns [LocList nextlist, LocList brklist, LocList cntlist, LocList 
 	$retList = new LocList ();
 }
 ;
-
 
 statement returns [LocList nextlist, LocList brklist, LocList cntlist, LocList retList]
 : location eqOp expr ';'
@@ -287,7 +254,6 @@ statement returns [LocList nextlist, LocList brklist, LocList cntlist, LocList r
 }
 | If '(' expr ')' marker block
 {
-	
 	$expr.truelist.BackPatch(q, $marker.label);
 	$nextlist = $expr.falselist;
 	$nextlist.Merge($block.nextlist);
@@ -326,8 +292,6 @@ m1=marker e2=expr
 }
 block m2=marker 
 {
-	
-
 	Symbol one = s.insert("1", DataType.INT);
 	q.Add(s.Find($Ident.text), s.Find($Ident.text), one, "+");
 	q.Add($m1.label, null, null, "goto");
@@ -352,7 +316,6 @@ block m2=marker
 }
 | Cnt ';'
 {
-
 	$nextlist = new LocList ();
 
 	$cntlist = new LocList ();
@@ -568,7 +531,6 @@ someArgs returns [int count]
 		case 6: q.Add ($expr.sym, null, null, "r9");
 				break;
 	}	
-
 }
 | expr
 {
@@ -587,15 +549,12 @@ someArgs returns [int count]
 		case 6: q.Add ($expr.sym, null, null, "r9");
 				break;
 	}	
-	
 }
-
 ;
 
 calloutArgs returns [int count]
 : c=calloutArgs ',' expr
 {
-	
 	$count = $c.count + 1;
 	switch ($count) {
 		case 1: q.Add ($expr.sym, null, null, "rdi");
@@ -637,7 +596,6 @@ calloutArgs returns [int count]
 }
 ;
 
-
 marker returns [Symbol label]
 :
 {
@@ -653,7 +611,6 @@ next returns [LocList nextlist]
 	$nextlist.Add(q.Add(null, null, null, "goto"));
 }
 ;
-
 
 location returns [Symbol base, Symbol offset]
 :Ident
@@ -700,11 +657,6 @@ eqOp
 | AssignOp
 ;
 
-
-
-
-
-
 //-----------------------------------------------------------------------------------------------------------
 fragment Delim
 : ' '
@@ -736,12 +688,9 @@ fragment AlphaNum
 | Digit
 ;
 
-
 WhiteSpace
 : Delim+ -> skip
 ;
-
-
 
 Char
 : '\'' ~('\\') '\''
@@ -751,8 +700,6 @@ Char
 Str
 :'"' ((~('\\' | '"')) | ('\\'.))* '"'
 ; 
-
-
 
 Class
 : 'class'
@@ -798,13 +745,9 @@ DecNum
 : Digit+
 ;
 
-
 HexNum
 : '0x'HexDigit+
 ;
-
-
-
 
 BoolLit
 : 'true'
@@ -820,8 +763,6 @@ Ident
 : Alpha AlphaNum* 
 ;
 
-
-
 AssignOp
 : '+='
 | '-='
@@ -836,16 +777,3 @@ AddSub
 : '+'
 | '-'
 ;
-
-
-
-
-
-
-
-
-
-
-
-
-
