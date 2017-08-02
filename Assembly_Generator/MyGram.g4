@@ -2,6 +2,8 @@ grammar MyGram;
 
 @header {
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 }
 
 @parser::members {
@@ -13,17 +15,20 @@ import java.io.*;
 		String name;
 		DataType dt;
 		int arrSize;
+		int offset;
 
 		Symbol (String n, DataType d) {
 			name = n;
 			dt = d;
 			arrSize = 0;
+			evalOffset();
 		}
 
 		Symbol (String n, DataType d, int arrSz) {
 			name = n;
 			dt = d;
 			arrSize = arrSz;
+			evalOffset();
 		}
 
 		Symbol (int id, DataType d) {
@@ -31,6 +36,7 @@ import java.io.*;
 			else name = "t_" + id;
 			dt = d;
 			arrSize = 0;
+			evalOffset();
 		}
 
 		boolean Equal (String n) {
@@ -46,7 +52,16 @@ import java.io.*;
 		}
 
 		void Print() {
-			System.out.println(name + "\t" + dt + "\t" + arrSize);
+			System.out.println("# " + name + "\t" + dt + "\t" + arrSize + "\t" + offset);
+		}
+
+		int GetOffset() {
+			return offset;
+		}
+
+		void evalOffset() {
+			this.offset = s.getOffset();
+			s.incrementOffset();
 		}
 	}
 
@@ -66,20 +81,20 @@ import java.io.*;
 			return null;
 		}
 
-		Symbol insert(String n, DataType d) {
+		Symbol insert (String n, DataType d) {
 			Symbol id = Find(n);
 			if (id != null) return id;
-			return(Add(n, d));
+			return (Add(n, d));
 		}
 
 		Symbol Add (String n, DataType d) {
 			st[size] = new Symbol(n, d);
-			return(st[size ++]);
+			return (st[size ++]);
 		}
 
 		Symbol Add (String n, DataType d, int arrSz) {
 			st[size] = new Symbol(n, d, arrSz);
-			return(st[size ++]);
+			return (st[size ++]);
 		}
 
 		Symbol Add (int id, DataType d) {
@@ -102,6 +117,10 @@ import java.io.*;
 				st[i].Print();
 			}
 		}
+
+		Symbol[] getSymbols() {
+			return st;
+		}
 	}
 
 	public class SymStack {
@@ -111,7 +130,8 @@ import java.io.*;
 		int[] prev;
 		int tos; //top of stack
 		int temps;
-	
+		int offset;
+
 		SymStack () {
 			ss = new SymTab [1000];
 			next = new int [1000];
@@ -122,6 +142,7 @@ import java.io.*;
 			prev[0] = -1;
 			tos = 0;
 			temps = 0;
+			offset = 0;
 		}
 
 		void PushSymTab () {
@@ -174,10 +195,26 @@ import java.io.*;
 
 		void Print () {
 			for (int i = 0; i < size; i++) {
-				System.out.println("-------------------------------------");
+				System.out.println("#-------------------------------------");
 				ss[i].Print();
-				System.out.println("-------------------------------------");
+				System.out.println("#-------------------------------------");
 			}
+		}
+
+		SymTab getGlobalSymTab() {
+			return ss[0];
+		}
+
+		void resetOffset() {
+			offset = 0;
+		}
+
+		int getOffset() {
+			return offset;
+		}
+
+		void incrementOffset() {
+			offset += 16;
 		}
 	}
 
@@ -256,6 +293,10 @@ import java.io.*;
 				qt[i].Print();
 			}
 		}
+
+		Quad[] getQuadTable() {
+			return qt;
+		}
 	}
 
 	QuadTab q = new QuadTab();
@@ -298,6 +339,121 @@ import java.io.*;
 			System.out.println("");
 		}
 	}
+
+	public class AssemblerGenerator {
+		ArrayList<Symbol> strList = new ArrayList<Symbol>();    // list of callout string arguments
+		ArrayList<String> globlVars = new ArrayList<String>();  // list of global variables
+		ArrayList<String[]> methodsOffsets = new ArrayList<String[]>();  // list of method offsets
+		ArrayList<MethodArgPair> methodsArgs = new ArrayList<MethodArgPair>();  // list of method arguments
+		String[] argRegisters = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
+		int argRegistersIndex = 0;
+		
+		void addMethodArg(MethodArgPair pair) {
+			methodsArgs.add(pair);
+		}
+
+		void addMethodOffset(String method, String offset) {
+			methodsOffsets.add(new String[]{method, offset});
+		}
+
+		void addGlobalVar(String str) {
+			globlVars.add(str);
+		}
+
+		void addCalloutString(Symbol str) {
+			boolean hasString = false;
+			for(Symbol s : strList) {
+				if(s.GetName().equals(str.GetName())) {
+					hasString = true;
+					return;
+				}
+			}
+			strList.add(str);
+		}
+
+		void printHeaders() {
+			Symbol[] gst = s.getGlobalSymTab().getSymbols();
+			
+			System.out.println(".globl main\n.data\n");
+
+			for(String s : globlVars) {
+				System.out.println(s);
+			}
+
+			for(Symbol s : strList) {
+				System.out.println("str" + s.GetOffset() + ": .asciz " + s.GetName());
+			}
+
+			System.out.println("\n.text\n\n");
+
+			// print instructions
+			for (int i = 0; i < q.getQuadTable().length; i ++) {
+				Quad quad = q.getQuadTable()[i];
+				if (quad != null) {
+					// methods
+					if (quad.dst == null && (quad.label.GetType() == DataType.INT 
+						|| quad.label.GetType() == DataType.VOID || quad.label.GetType() == DataType.BOOLEAN)) {
+
+						argRegistersIndex = 0;
+
+						String methodName = quad.label.GetName();
+						String methodOffeset = "";
+
+						System.out.println(methodName + ": push %rbp\nmov %rsp, %rbp");
+
+						for(String[] s : methodsOffsets) {
+							if (s[0].equals(methodName)) {
+								methodOffeset = s[1];
+								break;
+							}
+						}
+
+						System.out.println("sub $" + methodOffeset + ", %rsp");
+
+						for (MethodArgPair pair : methodsArgs) {
+							if (pair.methodName.equals(methodName)) {
+								for (Symbol arg : pair.arglist) {
+									if (argRegistersIndex < 6 && argRegistersIndex >= 0) {
+										System.out.println("mov " + argRegisters[argRegistersIndex] + ", -" + arg.GetOffset() + "(%rbp)");
+									}
+									argRegistersIndex++ ;
+								}
+							}
+						}
+
+						argRegistersIndex = 0;
+					}
+					else if (quad.op.equals("param")) {
+						String paramOffset = String.valueOf(quad.dst.GetOffset());
+						if (argRegistersIndex < 6 && argRegistersIndex >= 0) {
+							if (quad.dst.GetType() == DataType.STR) {
+								System.out.println("mov \$str" + paramOffset + ", " + argRegisters[argRegistersIndex]);
+							}
+							else {
+								System.out.println("mov -" + paramOffset + "(%rbp), " + argRegisters[argRegistersIndex]);
+							}
+						}
+						argRegistersIndex++ ;
+					}
+					else {
+						quad.Print();
+					}
+				}
+			}
+		}
+	}
+
+	AssemblerGenerator g = new AssemblerGenerator();
+
+	public class MethodArgPair {
+		String methodName;
+		List<Symbol> arglist;
+
+		public MethodArgPair(String methodName, List<Symbol> arglist) {
+			this.methodName = methodName;
+			this.arglist = arglist;
+		}
+	}
 }
 
 //---------------------------------------------------------------------------------------------------
@@ -305,7 +461,8 @@ prog
 : Class Program '{' field_decls method_decls '}'
 {
 	//s.Print();
-	q.Print();
+	//q.Print();
+	g.printHeaders();
 }
 ;
 
@@ -320,21 +477,35 @@ field_decl returns [DataType t]
 {
 	$t = $f.t;
 	Symbol sym = s.Add($Ident.text, $t);
+	g.addGlobalVar($Ident.text + ": .quad 0");
 }
 | f=field_decl ',' Ident '[' num ']'
 {
 	$t = $f.t;
-	Symbol sym = s.Add($Ident.text, $t, Integer.parseInt($num.text));
+	int arraysize = Integer.parseInt($num.text);
+	Symbol sym = s.Add($Ident.text, $t, arraysize);
+	String initZeros = "0";
+	for (int i = 1; i < arraysize; i++) {
+		initZeros += ", 0";
+	}
+	g.addGlobalVar($Ident.text + ": .quad " + initZeros);
 }
 | Type Ident
 {
 	$t = DataType.valueOf($Type.text.toUpperCase());
 	Symbol sym = s.Add($Ident.text, $t);
+	g.addGlobalVar($Ident.text + ": .quad 0");
 }
 | Type Ident '[' num ']'
 {
 	$t = DataType.valueOf($Type.text.toUpperCase());
-	Symbol sym = s.Add($Ident.text, $t, Integer.parseInt($num.text));
+	int arraysize = Integer.parseInt($num.text);
+	Symbol sym = s.Add($Ident.text, $t, arraysize);
+	String initZeros = "0";
+	for (int i = 1; i < arraysize; i++) {
+		initZeros += ", 0";
+	}
+	g.addGlobalVar($Ident.text + ": .quad " + initZeros);
 }
 ;
 
@@ -344,7 +515,18 @@ inited_field_decl
 	DataType t = DataType.valueOf($Type.text.toUpperCase());
 	Symbol src1 = s.insert($literal.text, t);
 	Symbol dst = s.Add($Ident.text, t);
-	q.Add(dst, src1, null, "=");
+	//q.Add(dst, src1, null, "=");
+	if(dst.GetType() == DataType.BOOLEAN) {
+		if(src1.GetName().equals("true")) {
+			g.addGlobalVar($Ident.text + ": .quad 1");
+		}
+		else {
+			g.addGlobalVar($Ident.text + ": .quad 0");
+		}
+	}
+	else {
+		g.addGlobalVar($Ident.text + ": .quad " + $literal.text);
+	}
 }
 ;
 
@@ -355,49 +537,78 @@ method_decls
 
 method_decl 
 : Type Ident 
-{
+{	
+	s.resetOffset();
 	DataType t = DataType.valueOf($Type.text.toUpperCase());
 	Symbol sym = s.Add($Ident.text, t);
 	s.PushSymTab();
 	q.Add(sym);
 }
-'(' params ')' block marker
+'(' params ')' block marker methodOffset
 {
 	s.PopSymTab();
+	g.addMethodOffset($Ident.text, String.valueOf($methodOffset.offset));
+	List<Symbol> paramlitst = $params.sl;
+	MethodArgPair pair = new MethodArgPair($Ident.text, paramlitst);
+	g.addMethodArg(pair);
 }
 | Void Ident 
 {
+	s.resetOffset();
 	DataType t = DataType.VOID;
 	Symbol sym = s.Add($Ident.text, t);
 	s.PushSymTab();
 	q.Add(sym);
 }
-'(' params ')' block marker
+'(' params ')' block marker methodOffset
 {
 	if (!$block.nextlist.IsEmpty()) {
 		q.Add(null, null, null, "ret");
 		$block.nextlist.BackPatch ($marker.label);
 	}
 	s.PopSymTab();
+	g.addMethodOffset($Ident.text, String.valueOf($methodOffset.offset));
+	List<Symbol> paramlitst = $params.sl;
+	MethodArgPair pair = new MethodArgPair($Ident.text, paramlitst);
+	g.addMethodArg(pair);
 }
 ;
 
-params 
+methodOffset returns [int offset]
+:
+{
+	$offset = s.getOffset() + 16;
+}
+;
+
+params returns [List<Symbol> sl]
 : Type Ident nextParams
 {
 	DataType t = DataType.valueOf($Type.text.toUpperCase());
 	Symbol sym = s.Add($Ident.text, t);
+	List<Symbol> result = $nextParams.sl;
+	result.add(sym);
+	$sl = result;
 }
 |
+{
+	$sl = new ArrayList<Symbol>();
+}
 ;
 
-nextParams
+nextParams returns [List<Symbol> sl]
 : n=nextParams ',' Type Ident
 {
 	DataType t = DataType.valueOf($Type.text.toUpperCase());
 	Symbol sym = s.Add($Ident.text, t);
+	List<Symbol> result = $n.sl;
+	result.add(sym);
+	$sl = result;
 }
 |
+{
+	$sl = new ArrayList<Symbol>();
+}
 ;
 
 block returns [LocList nextlist, LocList brklist, LocList cntlist]
@@ -696,6 +907,8 @@ calloutArgs returns [int count]
 	Symbol str = s.insert ($Str.text, DataType.STR);
 	q.Add (str, null, null, "param");
 	$count = $c.count + 1;
+
+	g.addCalloutString(str);
 }
 |
 {
