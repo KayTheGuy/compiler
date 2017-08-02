@@ -1,7 +1,6 @@
 package x86;
 
 	public class Symbol {
-	
 		String name;
 		DataType dt;
 		int arrSize;
@@ -10,10 +9,6 @@ package x86;
 		Symbol initVal;
 		int offset;
 		Boolean isGlobal;
-
-
-
-
 
 		public Symbol (String n, DataType d, int o) {
 			name = n;
@@ -35,7 +30,6 @@ package x86;
 			offset = o;
 			isGlobal = Boolean.FALSE;
 		}
-
 
 		public Symbol (String n, DataType d, int arrSz, int o) {
 			name = n;
@@ -68,7 +62,6 @@ package x86;
 			isGlobal = Boolean.FALSE;
 		}
 
-
 		public Symbol (int id, DataType d, Boolean isConstant, int o) {
 			if (d == DataType.LABEL) name = "L_" + id;
 			else name = "t_" + id;
@@ -79,8 +72,6 @@ package x86;
 			offset = o;
 			isGlobal = Boolean.FALSE;
 		}
-
-		
 
 		public boolean Equal (String n) {
 			return (name.equals(n));
@@ -125,9 +116,4 @@ package x86;
 			else if ((dt == DataType.INT) || (dt == DataType.BOOLEAN)) return ("-" + GetOffset() + "(%rbp)");
 			else return GetName();
 		}
-
-
-
-	
-	
 	}

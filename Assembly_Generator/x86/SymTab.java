@@ -1,13 +1,9 @@
 package x86;
 
-
 	public class SymTab {
-	
 		Symbol st[];
 		int size;
 		
-				
-
 		public SymTab (int o) {
 			st = new Symbol[1000];
 			size = 0;
@@ -28,7 +24,6 @@ package x86;
 			if (id != null) return id;
 	
 			return(Add(n, d, offset));
-
 		}
 
 		public Symbol insert(String n, DataType d, Boolean isConstant, int offset) {
@@ -36,10 +31,7 @@ package x86;
 			if (id != null) return id;
 	
 			return(Add(n, d, isConstant, offset));
-
 		}
-
-
 
 		public Symbol Add (String n, DataType d, int offset) {
 			st[size] = new Symbol(n, d, offset);
@@ -54,7 +46,6 @@ package x86;
 			//IncOffset();
 			return (st[size - 1]);
 		}
-
 
 		public Symbol Add (String n, DataType d, Boolean isConstant, int offset) {
 			st[size] = new Symbol(n, d, isConstant, offset);
@@ -102,12 +93,8 @@ package x86;
 
 		public void PrintGlobals() {
 			for (int i = 0; i < size; i++) {
-
 				if (!((st[i].GetType() == DataType.INT) || (st[i].GetType() == DataType.BOOLEAN) || (st[i].GetType() == DataType.STR))) continue;
 				if (st[i].isConstant() == Boolean.TRUE) continue;
-
-				
-
 				if (st[i].GetType() == DataType.STR) {
 					System.out.println("str" + st[i].GetOffset() + ": .asciz " + st[i].GetName());
 				} else if (st[i].GetSize() == 0) { //scalar global
@@ -124,7 +111,4 @@ package x86;
 				} //array global
 			}//each global
 		}
-
-	
-
 	}

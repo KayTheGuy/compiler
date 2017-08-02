@@ -4,7 +4,6 @@ package x86;
 		int[] locs;
 		int size;
 		
-
 		public LocList () {
 			locs = new int [1000];
 			size = 0;
@@ -19,7 +18,6 @@ package x86;
 			for (int i = 0; i < size; i ++) {
 				q.BackPatch(locs[i], label);
 			}
-		
 		}
 
 		public void Merge (LocList ll) {

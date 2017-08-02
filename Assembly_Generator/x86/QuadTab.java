@@ -1,7 +1,6 @@
 package x86;
 
 public class QuadTab {
-
 	Quad qt[];
 	int size;
 	SymStack s;
@@ -12,10 +11,7 @@ public class QuadTab {
 		s = stk;
 	}
 
-
-
 	public int Add(Symbol dst, Symbol src1, Symbol src2, String op) {
-		
 		qt[size] = new Quad(s, size, dst, src1, src2, op);
 		return (size ++);
 	}

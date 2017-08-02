@@ -131,17 +131,17 @@ params returns [int count]
 
 	$count = $p.count + 1;
 	switch ($count) {
-		case 1: q.Add (null, null, null, "push %rdi");
+		case 1: q.Add(null, null, null, "push %rdi");
 				break;
-		case 2: q.Add (null, null, null, "push %rsi");
+		case 2: q.Add(null, null, null, "push %rsi");
 				break;
-		case 3: q.Add (null, null, null, "push %rdx");
+		case 3: q.Add(null, null, null, "push %rdx");
 				break;
-		case 4: q.Add (null, null, null, "push %rcx");
+		case 4: q.Add(null, null, null, "push %rcx");
 				break;
-		case 5: q.Add (null, null, null, "push %r8");
+		case 5: q.Add(null, null, null, "push %r8");
 				break;
-		case 6: q.Add (null, null, null, "push %r9");
+		case 6: q.Add(null, null, null, "push %r9");
 				break;
 	}	
 }
@@ -479,25 +479,25 @@ expr returns [Symbol sym, LocList truelist, LocList falselist]
 {
 	$sym = s.Add (s.Find ($Ident.text).GetType());
 	String count = "" + $args.count;
-	q.Add ($sym, s.Find ($Ident.text) , s.insert(count, DataType.INT), "callexp");	
+	q.Add ($sym, s.Find($Ident.text) , s.insert(count, DataType.INT), "callexp");	
 }
 | Callout '(' Str calloutArgs ')'
 {
 	$sym = s.Add (DataType.INT);
 	String count = "" + $calloutArgs.count;
-	q.Add ($sym, s.insert ($Str.text, DataType.STR), s.insert(count, DataType.INT), "callexp");
+	q.Add ($sym, s.insert($Str.text, DataType.STR), s.insert(count, DataType.INT), "callexp");
 };
 
 methodCall 
 : Ident '(' args ')'
 {
 	String count = "" + $args.count;
-	q.Add (null, s.Find ($Ident.text) , s.insert(count, DataType.INT), "call");	
+	q.Add (null, s.Find($Ident.text) , s.insert(count, DataType.INT), "call");	
 }
 | Callout '(' Str calloutArgs ')'
 {
 	String count = "" + $calloutArgs.count;
-	q.Add (null, s.insert ($Str.text.replace("\"", ""), DataType.STR), s.insert(count, DataType.INT), "call");
+	q.Add(null, s.insert($Str.text.replace("\"", ""), DataType.STR), s.insert(count, DataType.INT), "call");
 }
 ;
 
@@ -518,17 +518,17 @@ someArgs returns [int count]
 	$count = $t.count + 1;
 
 	switch ($count) {
-		case 1: q.Add ($expr.sym, null, null, "rdi");
+		case 1: q.Add($expr.sym, null, null, "rdi");
 				break;
-		case 2: q.Add ($expr.sym, null, null, "rsi");
+		case 2: q.Add($expr.sym, null, null, "rsi");
 				break;
-		case 3: q.Add ($expr.sym, null, null, "rdx");
+		case 3: q.Add($expr.sym, null, null, "rdx");
 				break;
-		case 4: q.Add ($expr.sym, null, null, "rcx");
+		case 4: q.Add($expr.sym, null, null, "rcx");
 				break;
-		case 5: q.Add ($expr.sym, null, null, "r8");
+		case 5: q.Add($expr.sym, null, null, "r8");
 				break;
-		case 6: q.Add ($expr.sym, null, null, "r9");
+		case 6: q.Add($expr.sym, null, null, "r9");
 				break;
 	}	
 }
@@ -536,17 +536,17 @@ someArgs returns [int count]
 {
 	$count = 1;
 	switch ($count) {
-		case 1: q.Add ($expr.sym, null, null, "rdi");
+		case 1: q.Add($expr.sym, null, null, "rdi");
 				break;
-		case 2: q.Add ($expr.sym, null, null, "rsi");
+		case 2: q.Add($expr.sym, null, null, "rsi");
 				break;
-		case 3: q.Add ($expr.sym, null, null, "rdx");
+		case 3: q.Add($expr.sym, null, null, "rdx");
 				break;
-		case 4: q.Add ($expr.sym, null, null, "rcx");
+		case 4: q.Add($expr.sym, null, null, "rcx");
 				break;
-		case 5: q.Add ($expr.sym, null, null, "r8");
+		case 5: q.Add($expr.sym, null, null, "r8");
 				break;
-		case 6: q.Add ($expr.sym, null, null, "r9");
+		case 6: q.Add($expr.sym, null, null, "r9");
 				break;
 	}	
 }
@@ -557,17 +557,17 @@ calloutArgs returns [int count]
 {
 	$count = $c.count + 1;
 	switch ($count) {
-		case 1: q.Add ($expr.sym, null, null, "rdi");
+		case 1: q.Add($expr.sym, null, null, "rdi");
 				break;
-		case 2: q.Add ($expr.sym, null, null, "rsi");
+		case 2: q.Add($expr.sym, null, null, "rsi");
 				break;
-		case 3: q.Add ($expr.sym, null, null, "rdx");
+		case 3: q.Add($expr.sym, null, null, "rdx");
 				break;
-		case 4: q.Add ($expr.sym, null, null, "rcx");
+		case 4: q.Add($expr.sym, null, null, "rcx");
 				break;
-		case 5: q.Add ($expr.sym, null, null, "r8");
+		case 5: q.Add($expr.sym, null, null, "r8");
 				break;
-		case 6: q.Add ($expr.sym, null, null, "r9");
+		case 6: q.Add($expr.sym, null, null, "r9");
 				break;
 	}	
 }
@@ -576,17 +576,17 @@ calloutArgs returns [int count]
 	Symbol str = s.insertString($Str.text, DataType.STR);
 	$count = $c.count + 1;
 	switch ($count) {
-		case 1: q.Add (str, null, null, "rdi");
+		case 1: q.Add(str, null, null, "rdi");
 				break;
-		case 2: q.Add (str, null, null, "rsi");
+		case 2: q.Add(str, null, null, "rsi");
 				break;
-		case 3: q.Add (str, null, null, "rdx");
+		case 3: q.Add(str, null, null, "rdx");
 				break;
-		case 4: q.Add (str, null, null, "rcx");
+		case 4: q.Add(str, null, null, "rcx");
 				break;
-		case 5: q.Add (str, null, null, "r8");
+		case 5: q.Add(str, null, null, "r8");
 				break;
-		case 6: q.Add (str, null, null, "r9");
+		case 6: q.Add(str, null, null, "r9");
 				break;
 	}	
 }

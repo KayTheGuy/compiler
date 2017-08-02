@@ -60,11 +60,38 @@ package x86;
 				ReadSrc2(src2);
 				Compute("add");
 				WriteDst(dst);
+			} else if (op.equals("-")) { //subtraction
+				ReadSrc1(src1);
+				ReadSrc2(src2);
+				Compute("sub");
+				WriteDst(dst);
+			} else if (op.equals("*")) { //multiplication
+				ReadSrc1(src1);
+				ReadSrc2(src2);
+				Compute("mulq");
+				WriteDst(dst);
+			} else if (op.equals("/")) { //division
+				System.out.println("YOOOO mov $0, %rdx");
+				ReadSrc1(src1);
+				ReadSrc2(src2);
+				Compute("idiv");
+				WriteDst(dst);
+			} else if (op.equals("call")) {
+				System.out.println("call " + src1.GetName());
+			} else if (op.equals("push %rdi")) {
+				System.out.println("YOOOO" );
+			} else if (op.equals("rdi") || op.equals("rsi") || op.equals("rdx") 
+					   || op.equals("rcx") || op.equals("r8") || op.equals("r9")) {
+				System.out.println("mov " + dst.AsmPrint() + ", %" + op);
 			}
 		}
 
 		void Compute (String opcode) {
-			System.out.println(opcode + " %rbx, %rax");
+			if (opcode.equals("add") || opcode.equals("sub")) {
+				System.out.println(opcode + " %rbx, %rax");
+			} else if (opcode.equals("mulq") || opcode.equals("idiv")) {
+				System.out.println(opcode + " %rbx");
+			}
 		}
 
 		void ReadSrc1 (Symbol src) {
