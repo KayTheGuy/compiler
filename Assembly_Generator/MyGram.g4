@@ -390,7 +390,8 @@ import java.util.List;
 			for (int i = 0; i < q.getQuadTable().length; i ++) {
 				Quad quad = q.getQuadTable()[i];
 				if (quad != null) {
-					// methods
+
+					// in_method instructions
 					if (quad.dst == null && (quad.label.GetType() == DataType.INT 
 						|| quad.label.GetType() == DataType.VOID || quad.label.GetType() == DataType.BOOLEAN)) {
 
@@ -425,15 +426,29 @@ import java.util.List;
 					}
 					else if (quad.op.equals("param")) {
 						String paramOffset = String.valueOf(quad.dst.GetOffset());
+						String label = quad.label.GetName();
 						if (argRegistersIndex < 6 && argRegistersIndex >= 0) {
 							if (quad.dst.GetType() == DataType.STR) {
-								System.out.println("mov \$str" + paramOffset + ", " + argRegisters[argRegistersIndex]);
+								System.out.println(label + ": mov \$str" + paramOffset + ", " + argRegisters[argRegistersIndex]);
 							}
 							else {
-								System.out.println("mov -" + paramOffset + "(%rbp), " + argRegisters[argRegistersIndex]);
+								System.out.println(label +  ": mov -" + paramOffset + "(%rbp), " + argRegisters[argRegistersIndex]);
 							}
 						}
 						argRegistersIndex++ ;
+					}
+					else if (quad.op.equals("call")) {
+						String calloutMethodName = quad.src1.GetName();
+						String label = quad.label.GetName();
+						System.out.println(label + ": call " + calloutMethodName);
+					}
+					else if (quad.op.equals("ret")) {
+						if (quad.src1 == null) {
+						L_6: mov -16(%rbp), %rax
+						}
+						System.out.println("add $" + methodOffeset + ", %rsp");
+						System.out.println("pop %rbp");
+
 					}
 					else {
 						quad.Print();
@@ -868,7 +883,7 @@ methodCall
 | Callout '(' Str calloutArgs ')'
 {
 	String count = "" + $calloutArgs.count;
-	q.Add (null, s.insert ($Str.text, DataType.STR), s.insert(count, DataType.INT), "call");
+	q.Add (null, s.insert ($Str.text.substring(1, $Str.text.length() - 1), DataType.STR), s.insert(count, DataType.INT), "call");
 }
 ;
 
