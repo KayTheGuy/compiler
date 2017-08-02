@@ -347,6 +347,8 @@ import java.util.List;
 		ArrayList<MethodArgPair> methodsArgs = new ArrayList<MethodArgPair>();  // list of method arguments
 		String[] argRegisters = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
 		int argRegistersIndex = 0;
+
+		String lastMethodOffset = "";
 		
 		void addMethodArg(MethodArgPair pair) {
 			methodsArgs.add(pair);
@@ -398,18 +400,17 @@ import java.util.List;
 						argRegistersIndex = 0;
 
 						String methodName = quad.label.GetName();
-						String methodOffeset = "";
 
 						System.out.println(methodName + ": push %rbp\nmov %rsp, %rbp");
 
 						for(String[] s : methodsOffsets) {
 							if (s[0].equals(methodName)) {
-								methodOffeset = s[1];
+								lastMethodOffset = s[1];
 								break;
 							}
 						}
 
-						System.out.println("sub $" + methodOffeset + ", %rsp");
+						System.out.println("sub $" + lastMethodOffset + ", %rsp");
 
 						for (MethodArgPair pair : methodsArgs) {
 							if (pair.methodName.equals(methodName)) {
@@ -443,11 +444,14 @@ import java.util.List;
 						System.out.println(label + ": call " + calloutMethodName);
 					}
 					else if (quad.op.equals("ret")) {
-						if (quad.src1 == null) {
-						L_6: mov -16(%rbp), %rax
+						String label = quad.label.GetName();
+						if (quad.src1 != null) {
+							int returnValOffset = quad.src1.GetOffset();
+							System.out.println(label + ": mov -" + returnValOffset + "(%rbp), %rax");
 						}
-						System.out.println("add $" + methodOffeset + ", %rsp");
+						System.out.println("add $" + lastMethodOffset + ", %rsp");
 						System.out.println("pop %rbp");
+						System.out.println("ret");
 
 					}
 					else {
