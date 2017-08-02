@@ -76,6 +76,11 @@ package x86;
 				ReadSrc2(src2);
 				Compute("idiv");
 				WriteDst(dst);
+			} else if (op.equals("cmp")) { //compare
+				ReadSrc1(src1);
+				ReadSrc2(src2);
+				Compute("cmp");
+				WriteDst(dst);
 			} else if (op.equals("call")) {
 				System.out.println("call " + src1.GetName());
 			} else if (op.equals("push %rdi")) {
@@ -83,6 +88,20 @@ package x86;
 			} else if (op.equals("rdi") || op.equals("rsi") || op.equals("rdx") 
 					   || op.equals("rcx") || op.equals("r8") || op.equals("r9")) {
 				System.out.println("mov " + dst.AsmPrint() + ", %" + op);
+			} else if (op.equals("goto")) { // jmp (goto)
+				WriteJmp("jmp", dst.GetName());
+			} else if (op.equals("jl")) { // jl 
+				WriteJmp("jl", dst.GetName());
+			} else if (op.equals("jle")) { // jle 
+				WriteJmp("jle", dst.GetName());
+			} else if (op.equals("jg")) { // jg 
+				WriteJmp("jg", dst.GetName());
+			} else if (op.equals("jge")) { // jge
+				WriteJmp("jge", dst.GetName());
+			} else if (op.equals("je")) { // je 
+				WriteJmp("je", dst.GetName());
+			} else if (op.equals("jne")) { // jne
+				WriteJmp("jne", dst.GetName());
 			}
 		}
 
@@ -91,6 +110,8 @@ package x86;
 				System.out.println(opcode + " %rbx, %rax");
 			} else if (opcode.equals("mulq") || opcode.equals("idiv")) {
 				System.out.println(opcode + " %rbx");
+			} else if (opcode.equals("cmp")) {
+				System.out.println(opcode + " %rax, %rbx");
 			}
 		}
 
@@ -104,5 +125,9 @@ package x86;
 
 		void WriteDst (Symbol dst) {
 			System.out.println("mov %rax, " + dst.AsmPrint());
+		}
+
+		void WriteJmp(String op, String label) {
+			System.out.println(op + " " + label);
 		}
 	}
