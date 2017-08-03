@@ -1,5 +1,4 @@
 package x86;
-
 	public class Quad {
 		Symbol label;
 		String op;
@@ -71,7 +70,7 @@ package x86;
 				Compute("mulq");
 				WriteDst(dst);
 			} else if (op.equals("/")) { //division
-				System.out.println("YOOOO mov $0, %rdx");
+				System.out.println("mov $0, %rdx");
 				ReadSrc1(src1);
 				ReadSrc2(src2);
 				Compute("idiv");
@@ -81,10 +80,23 @@ package x86;
 				ReadSrc2(src2);
 				Compute("cmp");
 				WriteDst(dst);
-			} else if (op.equals("call")) {
+			} else if (op.equals("call")) { //call
 				System.out.println("call " + src1.GetName());
+			} else if (op.equals("callexp")) { //callexp
+				System.out.println("call " + src1.GetName());
+				WriteDst(dst);
 			} else if (op.equals("push %rdi")) {
-				System.out.println("YOOOO" );
+				System.out.println("mov %rdi, -16(%rbp)" );
+			} else if (op.equals("push %rsi")) {
+				System.out.println("mov %rsi, -32(%rbp)" );
+			} else if (op.equals("push %rdx")) {
+				System.out.println("mov %rdx, -48(%rbp)" );
+			} else if (op.equals("push %rcx")) {
+				System.out.println("mov %rcx, -64(%rbp)" );
+			} else if (op.equals("push %r8")) {
+				System.out.println("mov %r8, -80(%rbp)" );
+			} else if (op.equals("push %r9")) {
+				System.out.println("mov %r9, -96(%rbp)" );
 			} else if (op.equals("rdi") || op.equals("rsi") || op.equals("rdx") 
 					   || op.equals("rcx") || op.equals("r8") || op.equals("r9")) {
 				System.out.println("mov " + dst.AsmPrint() + ", %" + op);
@@ -102,9 +114,20 @@ package x86;
 				WriteJmp("je", dst.GetName());
 			} else if (op.equals("jne")) { // jne
 				WriteJmp("jne", dst.GetName());
-			}
+			} else if (op.equals("[]=")) { // array assign
+				ReadSrc1(dst);
+				ReadSrc2(src1);
+				Compute("add");
+				ReadSrc2(src2);
+				System.out.println("mov %rbx, (%rax)");
+			} else if (op.equals("[]")) { // array access
+				ReadSrc1(src1);
+				ReadSrc2(src2);
+				Compute("add");
+				System.out.println("mov (%rax), %rbx");
+				System.out.println("mov %rbx, " + dst.AsmPrint());
+			} 
 		}
-
 		void Compute (String opcode) {
 			if (opcode.equals("add") || opcode.equals("sub")) {
 				System.out.println(opcode + " %rbx, %rax");
@@ -114,19 +137,15 @@ package x86;
 				System.out.println(opcode + " %rax, %rbx");
 			}
 		}
-
 		void ReadSrc1 (Symbol src) {
 			System.out.println("mov " + src.AsmPrint() + ", %rax");
 		}
-
 		void ReadSrc2 (Symbol src) {
 			System.out.println("mov " + src.AsmPrint() + ", %rbx");
 		}
-
 		void WriteDst (Symbol dst) {
 			System.out.println("mov %rax, " + dst.AsmPrint());
 		}
-
 		void WriteJmp(String op, String label) {
 			System.out.println(op + " " + label);
 		}
